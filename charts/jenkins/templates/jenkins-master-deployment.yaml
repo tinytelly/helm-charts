@@ -189,6 +189,16 @@ spec:
               value: "{{ if .Values.master.jenkinsUriPrefix }}--prefix={{ .Values.master.jenkinsUriPrefix }} {{ end }}{{ default "" .Values.master.jenkinsOpts}}"
             - name: JENKINS_SLAVE_AGENT_PORT
               value: "{{ .Values.master.slaveListenerPort }}"
+            - name: DOCKER_REGISTRY_URL
+              value: "{{ .Values.master.docker.registry.url }}"
+            - name: DOCKER_REGISTRY_USERNAME
+              value: "{{ .Values.master.docker.registry.username }}"
+            - name: DOCKER_REGISTRY_PASSWORD
+              value: "{{ .Values.master.docker.registry.password }}"  
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName  
             {{- if .Values.master.useSecurity }}
             - name: ADMIN_PASSWORD
               valueFrom:
@@ -276,6 +286,8 @@ spec:
             - mountPath: /var/jenkins_config
               name: jenkins-config
               readOnly: true
+            - name: var-run-docker-sock
+              mountPath: /var/run/docker.sock  
             {{- if .Values.master.enableXmlConfig }}
             {{- if .Values.master.credentialsXmlSecret }}
             - mountPath: /var/jenkins_credentials
@@ -357,6 +369,9 @@ spec:
         emptyDir: {}
       - name: tmp
         emptyDir: {}
+      - name: var-run-docker-sock
+        hostPath:
+          path: /var/run/docker.sock
       - name: jenkins-config
         configMap:
           name: {{ template "jenkins.fullname" . }}
